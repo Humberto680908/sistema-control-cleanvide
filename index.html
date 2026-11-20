@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema de Control Clean Vide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: recorrido guiado, sobrio y seguro, en la voz institucional de Clean Vide.
+   IDEA: la presentación editorial impresa que se narra sola, lámina por lámina.
+   PICTURE: las pantallas reales del sistema, que cobran vida al ritmo de la voz.
+   COLOUR and TYPE: manual Clean Vide (hueso, Azul Medianoche, terracota) · Fira Sans.
+   LAYOUT: escenario 16:9 escalado a la pantalla, barra de control abajo. */
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#1B2836;overflow:hidden;font-family:"Fira Sans",system-ui,sans-serif}
+#visor{position:fixed;inset:0 0 76px 0;display:grid;place-items:center;overflow:hidden}
+#escenario{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center center;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+#escenario section{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;opacity:0;visibility:hidden;transition:opacity .6s ease,visibility 0s linear .6s}
+#escenario section.activa{opacity:1;visibility:visible;transition:opacity .6s ease}
+:root{--hueso:#F4F0E8;--hueso2:#EAE5DB;--azul:#2C3E50;--tinta:#1F2B38;--terra:#B5321F;--mostaza:#DB9305;--gris:#6F7A7B;--grisclaro:#B9B6AE;--blanco:#FBF9F5}
+section{font-family:"Fira Sans",sans-serif;background:var(--hueso);color:var(--tinta);padding:128px 128px 160px;box-sizing:border-box}
+.pie{position:absolute;left:128px;bottom:64px;width:1664px;display:flex;justify-content:space-between;align-items:center;font-size:24px;color:var(--gris);letter-spacing:.04em}
+.pie b{color:var(--azul);font-weight:600}
+.eti{font-size:26px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--terra);margin:0 0 20px}
+.titulo{font-size:72px;font-weight:600;line-height:1.08;color:var(--azul);margin:0;letter-spacing:-.01em}
+.texto{font-size:30px;line-height:1.4;color:var(--gris);margin:0}
+
+/* Portada */
+.portada{background:var(--azul);color:var(--blanco);padding:128px}
+.portada .logo{position:absolute;left:128px;top:112px;width:230px;height:152px;object-fit:contain}
+.portada .bloque{position:absolute;left:128px;top:360px;width:860px}
+.portada .eti{color:var(--mostaza)}
+.portada h1{font-size:88px;font-weight:600;line-height:1.05;margin:0;color:var(--blanco);letter-spacing:-.015em}
+.portada h1 span{color:#E8775F}
+.portada .sub{font-size:32px;line-height:1.4;color:#C9D1D8;margin:36px 0 0}
+.portada .linea{position:absolute;left:128px;top:320px;width:96px;height:6px;background:var(--terra)}
+.portada .captura{position:absolute;left:1080px;top:150px;width:1140px;height:913px;object-fit:cover;object-position:left top;border-radius:20px;box-shadow:0 40px 90px rgba(10,18,28,.55)}
+.portada .firma{position:absolute;left:128px;bottom:72px;width:860px;font-size:24px;color:#9FB0BE;letter-spacing:.06em;margin:0}
+
+/* Flujo */
+.flujo .titulo{max-width:1300px}
+.pasos{display:flex;gap:28px;margin-top:88px;align-items:stretch}
+.paso{flex:1;display:flex;flex-direction:column;border-radius:16px;padding:36px 32px;background:var(--blanco)}
+.paso .num{font-size:24px;font-weight:600;letter-spacing:.14em;color:var(--gris);margin:0 0 18px}
+.paso h3{font-size:36px;font-weight:600;line-height:1.15;margin:0 0 16px;color:var(--azul)}
+.paso p.desc{font-size:26px;line-height:1.4;margin:0;color:var(--gris)}
+.paso.antes{background:transparent;border:3px dashed var(--grisclaro)}
+.paso.antes h3{color:var(--gris)}
+.paso .img{width:100%;height:230px;object-fit:cover;object-position:center top;border-radius:10px;margin-top:auto}
+.paso.era{background:var(--terra)}
+.paso.era .num{color:#F6C9BE}
+.paso.era h3{color:var(--blanco)}
+.paso.era p.desc{color:#FBE3DC}
+.flecha{align-self:center;width:36px;height:36px;flex:none}
+
+/* Pilar */
+.pilar .cols{display:flex;gap:56px;margin-top:56px;height:600px}
+.pilar .antes{width:440px;flex:none;border:3px dashed var(--grisclaro);border-radius:16px;padding:40px 40px;box-sizing:border-box}
+.pilar .antes .k,.pilar .ahora .k{font-size:24px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;margin:0 0 28px}
+.pilar .antes .k{color:var(--gris)}
+.pilar .antes p.item{font-size:30px;line-height:1.35;color:var(--gris);margin:0 0 26px;}
+.pilar .ahora{flex:1;display:flex;gap:40px}
+.pilar .ahora .k{color:var(--terra)}
+.pilar .ahora .lista{width:390px;flex:none}
+.pilar .ahora p.item{font-size:30px;line-height:1.35;color:var(--azul);font-weight:500;margin:0 0 26px;padding-left:24px;border-left:5px solid var(--terra)}
+.pilar .pantalla{flex:1;min-width:0;height:600px;background:var(--azul);border-radius:16px;padding:22px;box-sizing:border-box}
+.pilar .pantalla img{width:100%;height:100%;object-fit:contain;object-position:center;border-radius:8px}
+
+/* Declaración de color */
+.declara{background:var(--terra);color:var(--blanco)}
+.declara .eti{color:#F6C9BE}
+.declara .titulo{color:var(--blanco);font-size:80px;max-width:1500px}
+.declara .pie,.declara .pie b{color:#F6C9BE}
+.cinco{display:flex;margin-top:200px;border-top:2px solid rgba(251,249,245,.35)}
+.cinco .p{flex:1;padding:36px 28px 0 0}
+.cinco .p.ancho{flex:1.3}
+.cinco .n{font-size:28px;font-weight:600;color:#F6C9BE;margin:0 0 16px;letter-spacing:.1em}
+.cinco h3{font-size:38px;font-weight:600;line-height:1.15;margin:0;color:var(--blanco)}
+
+/* Crecimiento */
+.crece{background:var(--azul);color:var(--blanco)}
+.crece .eti{color:var(--mostaza)}
+.crece .titulo{color:var(--blanco)}
+.crece .pie,.crece .pie b{color:#9FB0BE}
+.ruta{display:flex;gap:24px;margin-top:80px}
+.ruta .hoy{width:440px;flex:none;background:var(--blanco);border-radius:16px;padding:40px;box-sizing:border-box}
+.ruta .hoy .k{font-size:24px;font-weight:600;letter-spacing:.16em;color:var(--terra);margin:0 0 20px}
+.ruta .hoy h3{font-size:40px;line-height:1.15;font-weight:600;color:var(--azul);margin:0 0 16px}
+.ruta .hoy p.d{font-size:28px;line-height:1.4;color:var(--gris);margin:0}
+.ruta .sig{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.ruta .c{border:2px solid rgba(251,249,245,.28);border-radius:16px;padding:32px 36px}
+.ruta .c .k{font-size:24px;font-weight:600;letter-spacing:.16em;color:var(--mostaza);margin:0 0 12px}
+.ruta .c h3{font-size:36px;font-weight:600;color:var(--blanco);margin:0 0 8px}
+.ruta .c p.d{font-size:26px;line-height:1.35;color:#C9D1D8;margin:0}
+.crece .nota{font-size:30px;color:#C9D1D8;margin:48px 0 0}
+
+/* Inversión */
+.inv .cols{display:flex;gap:48px;margin-top:48px}
+.inv .otro{width:470px;flex:none;border:3px dashed var(--grisclaro);border-radius:16px;padding:40px;box-sizing:border-box}
+.inv .otro .k{font-size:24px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gris);margin:0 0 24px}
+.inv .otro p.item{font-size:28px;line-height:1.35;color:var(--gris);margin:0 0 22px}
+.inv .otro p.fuente{font-size:24px;color:var(--grisclaro);margin:8px 0 0}
+.inv .partes{flex:1;display:flex;flex-direction:column;gap:16px}
+.inv .parte{display:flex;justify-content:space-between;align-items:center;background:var(--blanco);border-radius:16px;padding:24px 40px}
+.inv .parte h3{font-size:36px;font-weight:600;color:var(--azul);margin:0 0 6px}
+.inv .parte p.d{font-size:26px;color:var(--gris);margin:0}
+.inv .parte .monto{text-align:right;flex:none;margin-left:32px}
+.inv .parte .monto p.m{font-size:48px;font-weight:600;color:var(--terra);margin:0;line-height:1.1}
+.inv .parte .monto p.s{font-size:24px;color:var(--gris);margin:4px 0 0}
+.inv .parte .monto p.antes{font-size:26px;color:var(--grisclaro);text-decoration:line-through;margin:0 0 2px}
+.inv .sello{background:var(--azul);border-radius:16px;padding:22px 40px}
+.inv .sello p{font-size:26px;line-height:1.4;color:#E4E9ED;margin:0}
+.inv .sello b{color:var(--mostaza)}
+
+/* Cierre */
+.cierre .titulo{font-size:96px;max-width:1400px}
+.cierre p.sig{font-size:36px;line-height:1.4;color:#FBE3DC;margin:72px 0 0;max-width:1300px}
+.cierre .logo{position:absolute;right:128px;top:112px;width:200px;height:132px;object-fit:contain}
+
+/* ===== Sistema editorial v2 ===== */
+.ed{background:#FAF8F4;color:var(--azul);padding:128px}
+.ed .trama{position:absolute;left:128px;top:120px;width:220px;height:220px}
+.ed .numeral{position:absolute;left:176px;top:150px;width:520px;font-size:280px;font-weight:800;line-height:.82;letter-spacing:-.04em;color:var(--azul);margin:0}
+.ed .rotulo{font-size:24px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--terra);margin:0 0 18px}
+.ed .titular{font-size:60px;font-weight:700;line-height:1.08;letter-spacing:.03em;text-transform:uppercase;color:var(--azul);margin:0}
+.ed .pie2{position:absolute;left:128px;bottom:64px;width:760px;display:flex;justify-content:space-between;font-size:24px;letter-spacing:.06em;color:var(--gris)}
+.ed .pie2 b{color:var(--azul);font-weight:600}
+.ed .firma2{position:absolute;right:128px;bottom:64px;width:420px;text-align:right;font-size:24px;letter-spacing:.06em;color:#F6C9BE;margin:0}
+
+/* Índice de pilares */
+.ed .cab{position:absolute;left:128px;top:470px;width:700px}
+.ed .cab p.bajada{font-size:30px;line-height:1.45;color:var(--gris);margin:28px 0 0;width:620px}
+.ed .vline{position:absolute;left:940px;top:128px;width:3px;height:824px;background:var(--terra)}
+.ed .indice{position:absolute;left:1040px;top:150px;width:752px}
+.ed .fila{display:flex;align-items:baseline;gap:40px;padding:30px 0;border-bottom:1px solid #D9D4CA}
+.ed .fila:first-child{border-top:1px solid #D9D4CA}
+.ed .fila .n{font-size:44px;font-weight:800;color:var(--terra);margin:0;width:80px;flex:none}
+.ed .fila h3{font-size:40px;font-weight:500;color:var(--azul);margin:0}
+
+/* Página de pilar */
+.ed .bloque-terra{position:absolute;right:0;top:0;width:620px;height:1080px;background:var(--terra)}
+.ed .tit-pilar{position:absolute;left:128px;top:392px;width:760px}
+.ed .tit-pilar .titular{font-size:56px}
+.ed .comparativo{width:740px;display:flex;gap:56px;margin-top:44px}
+.ed .comparativo .col{flex:1}
+.ed .comparativo .k{font-size:22px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;margin:0 0 6px;padding-bottom:14px;border-bottom:2px solid var(--azul)}
+.ed .comparativo .antes .k{color:var(--grisclaro);border-bottom-color:#D9D4CA}
+.ed .comparativo .ahora .k{color:var(--terra);border-bottom-color:var(--terra)}
+.ed .comparativo p.it{font-size:25px;line-height:1.35;margin:0;padding:14px 0;border-bottom:1px solid #E3DED4}
+.ed .comparativo .antes p.it{color:#9A9F9E}
+.ed .comparativo .ahora p.it{color:var(--azul);font-weight:500}
+.ed .captura2{position:absolute;left:960px;top:216px;width:840px;height:629px;object-fit:cover;object-position:left top;border-radius:6px;box-shadow:0 30px 70px rgba(31,43,56,.28)}
+.ed .leyenda{position:absolute;left:1340px;top:880px;width:460px;text-align:right;font-size:24px;letter-spacing:.08em;color:#FBE3DC;margin:0}
+
+.ed .captura2.vert{left:1080px;top:190px;width:640px;height:680px;object-fit:cover;object-position:center top}
+.ed .captura2.cuad{left:1000px;top:190px;width:760px;height:700px;object-fit:cover;object-position:left top}
+.ed .leyenda.baja{top:900px}
+
+/* Flujo v2 */
+.ed .tit-flujo{position:absolute;left:128px;top:128px;width:1300px}
+.ed .etapas{position:absolute;left:128px;top:420px;width:1664px;height:500px;display:flex}
+.ed .etapa{flex:1;padding:40px 36px 0;border-left:1px solid #D9D4CA}
+.ed .etapa:first-child{padding-left:0;border-left:none}
+.ed .etapa .nn{font-size:120px;font-weight:800;line-height:.9;letter-spacing:-.03em;color:var(--azul);margin:0 0 28px}
+.ed .etapa.antes .nn{color:#CFCAC0}
+.ed .etapa h3{font-size:30px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--azul);margin:0 0 16px}
+.ed .etapa.antes h3{color:#9A9F9E}
+.ed .etapa p.d{font-size:26px;line-height:1.4;color:var(--gris);margin:0}
+.ed .etapa img{width:100%;height:170px;object-fit:cover;object-position:center top;border-radius:6px;margin-top:20px;box-shadow:0 16px 40px rgba(31,43,56,.18)}
+.ed .etapa.era{background:var(--terra);border-left:none;padding:40px 36px}
+.ed .etapa.era .nn{color:var(--blanco)}
+.ed .etapa.era h3{color:var(--blanco)}
+.ed .etapa.era p.d{color:#FBE3DC}
+
+/* Crecimiento v2 */
+.ed.azul{background:var(--azul)}
+.ed.azul .titular{color:var(--blanco)}
+.ed.azul .rotulo{color:var(--mostaza)}
+.ed.azul .pie2,.ed.azul .pie2 b{color:#9FB0BE}
+.ed .crece-cab{position:absolute;left:128px;top:128px;width:680px}
+.ed .crece-cab p.bajada{font-size:30px;line-height:1.45;color:#C9D1D8;margin:28px 0 0}
+.ed .rutas{position:absolute;left:1000px;top:128px;width:792px}
+.ed .ruta2{display:flex;gap:36px;padding:30px 0;border-bottom:1px solid rgba(251,249,245,.22)}
+.ed .ruta2:first-child{border-top:1px solid rgba(251,249,245,.22)}
+.ed .ruta2 .t{font-size:22px;font-weight:600;letter-spacing:.2em;color:var(--mostaza);width:150px;flex:none;margin:8px 0 0}
+.ed .ruta2.hoy .t{color:#E8775F}
+.ed .ruta2 h3{font-size:36px;font-weight:600;color:var(--blanco);margin:0 0 6px}
+.ed .ruta2 p.d{font-size:26px;line-height:1.35;color:#C9D1D8;margin:0}
+
+/* Inversión v2 */
+.ed .inv-cab{position:absolute;left:128px;top:128px;width:1300px}
+.ed .otro2{position:absolute;left:128px;top:400px;width:520px}
+.ed .otro2 .k,.ed .partes2 .k{font-size:22px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;margin:0;padding-bottom:14px}
+.ed .otro2 .k{color:#9A9F9E;border-bottom:1px solid #D9D4CA}
+.ed .otro2 p.it{font-size:26px;line-height:1.35;color:#9A9F9E;margin:0;padding:18px 0;border-bottom:1px solid #E3DED4}
+.ed .otro2 p.fuente{font-size:22px;color:#B9B6AE;margin:18px 0 0}
+.ed .partes2{position:absolute;left:760px;top:400px;width:1032px}
+.ed .partes2 .k{color:var(--terra);border-bottom:2px solid var(--terra)}
+.ed .p2{display:flex;justify-content:space-between;align-items:center;padding:22px 0;border-bottom:1px solid #E3DED4}
+.ed .p2 h3{font-size:34px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--azul);margin:0 0 4px}
+.ed .p2 p.d{font-size:24px;color:var(--gris);margin:0}
+.ed .p2 .monto{text-align:right;flex:none;margin-left:24px}
+.ed .p2 .monto p.m{font-size:52px;font-weight:800;color:var(--terra);margin:0;line-height:1.05;letter-spacing:-.01em}
+.ed .p2 .monto p.s{font-size:22px;color:var(--gris);margin:4px 0 0}
+.ed .p2 .monto p.antes{font-size:24px;color:#B9B6AE;text-decoration:line-through;margin:0}
+.ed .sello2{display:flex;gap:24px;align-items:center;margin-top:28px}
+.ed .sello2 svg{width:64px;height:64px;flex:none}
+.ed .sello2 p{font-size:26px;line-height:1.4;color:var(--azul);margin:0}
+.ed .sello2 b{color:var(--terra)}
+
+.ed.cierre2{background:var(--terra)}
+.ed .numeral.blanco{color:var(--blanco)}
+.ed.cierre2 .trama{opacity:.55}
+.ed .cierre-cab{position:absolute;left:128px;top:400px;width:1400px}
+.ed.cierre2 .rotulo{color:#F6C9BE}
+.ed.cierre2 .titular{color:var(--blanco);font-size:72px}
+.ed.cierre2 p.sig{font-size:32px;line-height:1.4;color:#FBE3DC;margin:40px 0 0;width:1100px}
+.ed.cierre2 .logo{position:absolute;right:128px;top:112px;width:200px;height:132px;object-fit:contain}
+.ed .firma3{position:absolute;left:128px;bottom:64px;width:600px;font-size:24px;letter-spacing:.06em;color:#F6C9BE;margin:0}
+
+.ed .anexo{font-size:24px;color:var(--gris);margin:28px 0 0;font-style:italic}
+.cue{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+.cue.on{opacity:1;transform:none}
+section.activa .captura2,section.activa .captura{animation:vivo 16s ease-out both}
+@keyframes vivo{from{transform:scale(1)}to{transform:scale(1.045)}}
+section.activa .numeral{animation:entra .9s ease-out both}
+@keyframes entra{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+#subt{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);width:min(1100px,92%);text-align:center;font-size:clamp(14px,1.6vw,20px);line-height:1.45;color:#fff;background:rgba(27,40,54,.82);padding:10px 18px;border-radius:8px;display:none}
+body.cc #subt.tiene{display:block}
+/* Barra */
+#barra{position:fixed;left:0;right:0;bottom:0;height:76px;background:#2C3E50;display:flex;align-items:center;gap:14px;padding:0 max(16px,2vw);color:#E4E9ED}
+#barra button{font:inherit;background:none;border:1px solid rgba(255,255,255,.22);color:#FBF9F5;border-radius:8px;min-width:44px;height:44px;display:grid;place-items:center;cursor:pointer}
+#barra button:hover{border-color:#fff}
+#barra button:focus-visible{outline:2px solid #DB9305;outline-offset:2px}
+#play{background:#B5321F!important;border-color:#B5321F!important;width:52px}
+#puntos{flex:1;display:flex;gap:6px;justify-content:center;flex-wrap:nowrap;overflow:hidden}
+#puntos button{min-width:40px;height:36px;border:none;border-bottom:3px solid transparent;border-radius:0;font-size:15px;font-weight:600;color:#9FB0BE;position:relative;overflow:hidden}
+#puntos button.hecho{color:#E4E9ED}
+#puntos button.act{color:#fff;border-bottom-color:#B5321F}
+#puntos button .prog{position:absolute;left:0;bottom:0;height:3px;background:#DB9305;width:0}
+#cc.on{background:#FBF9F5;color:#2C3E50}
+#tiempo{font-size:14px;color:#9FB0BE;min-width:84px;text-align:right;font-variant-numeric:tabular-nums}
+/* Inicio */
+#inicio{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:rgba(27,40,54,.55);backdrop-filter:blur(2px)}
+#inicio .caja{text-align:center;color:#FBF9F5;padding:24px}
+#inicio button{font:600 22px "Fira Sans",sans-serif;background:#B5321F;color:#fff;border:none;border-radius:999px;padding:20px 40px;cursor:pointer;display:inline-flex;align-items:center;gap:14px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+#inicio button:focus-visible{outline:3px solid #DB9305;outline-offset:4px}
+#inicio p{margin:18px 0 0;font-size:16px;color:#C9D1D8;letter-spacing:.04em}
+#inicio.oculto{display:none}
+#fin{position:fixed;inset:0 0 76px 0;z-index:4;display:none;place-items:center;background:rgba(27,40,54,.6)}
+#fin.ver{display:grid}
+#fin button{font:600 20px "Fira Sans",sans-serif;background:#FBF9F5;color:#2C3E50;border:none;border-radius:999px;padding:16px 32px;cursor:pointer}
+#girar{display:none}
+@media (orientation:portrait) and (max-width:700px){#girar{display:block;position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:6;background:#DB9305;color:#1B2836;font-size:14px;font-weight:600;padding:8px 14px;border-radius:999px;white-space:nowrap}#puntos button{min-width:24px;font-size:12px}#tiempo{display:none}}
+@media (max-width:700px){#puntos{gap:0}#puntos button{min-width:26px;font-size:12px}}
+@media (prefers-reduced-motion:reduce){.cue{transition:none;transform:none}section.activa .captura2,section.activa .captura,section.activa .numeral{animation:none}#escenario section{transition:none}}
+</style>
+</head>
+<body>
+<div id="visor"><div id="escenario">
+<section id="portada" class="portada">
+<img class="captura" src="img/stock_desktop.jpg" alt="Pantalla real de Stock y Almacenes del sistema Clean Vide">
+<img class="logo" src="img/cv_logo_blanco.svg" alt="Clean Vide">
+<div class="linea"></div>
+<div class="bloque">
+<p class="eti">Sistema de Control Operativo</p>
+<h1>Una operación con <span>control, orden y responsabilidad.</span></h1>
+<p class="cue sub" data-t="6.2">Cómo trabajaba Clean Vide, cómo trabaja hoy y cómo crece desde aquí.</p>
+</div>
+<p class="firma">Presentado por KAI Branding | Studio · Noviembre 2026</p>
+</section>
+<section id="flujo" class="ed">
+<div class="tit-flujo"><p class="rotulo">El camino recorrido</p><h2 class="titular">De una app genérica a una nueva forma de operar</h2></div>
+<div class="etapas">
+<div class="cue etapa antes" data-t="8.28"><p class="nn">01</p><h3>El inicio</h3><p class="d">Una app genérica, sin identidad, sin flujo y sin control entre bodegas.</p></div>
+<div class="cue etapa" data-t="10.96"><p class="nn">02</p><h3>La propuesta</h3><p class="d">KAI diseñó cómo debía operar cada área y lo presentó de forma interactiva.</p></div>
+<div class="cue etapa" data-t="13.08"><p class="nn">03</p><h3>El sistema</h3><p class="d">Cuatro portales conectados a Odoo.</p><img src="img/escaner_movil.jpg" alt="Escáner de almacén en celular"></div>
+<div class="etapa era"><p class="nn">04</p><h3>La nueva era</h3><p class="d">Personal, inventario, procesos y producto bajo una misma disciplina diaria.</p></div>
+</div>
+<div class="pie2"><span><b>Clean Vide</b> · Sistema de Control Operativo</span><span>02</span></div>
+</section>
+<section id="pilares" class="ed">
+<svg class="trama" viewBox="0 0 220 220" aria-hidden="true"><defs><clipPath id="c2_1"><rect width="220" height="220"/></clipPath></defs><g clip-path="url(#c2_1)" stroke="#B5321F" stroke-width="13"><line x1="-240" y1="230" x2="0" y2="-10"/><line x1="-210" y1="230" x2="30" y2="-10"/><line x1="-180" y1="230" x2="60" y2="-10"/><line x1="-150" y1="230" x2="90" y2="-10"/><line x1="-120" y1="230" x2="120" y2="-10"/><line x1="-90" y1="230" x2="150" y2="-10"/><line x1="-60" y1="230" x2="180" y2="-10"/><line x1="-30" y1="230" x2="210" y2="-10"/><line x1="0" y1="230" x2="240" y2="-10"/><line x1="30" y1="230" x2="270" y2="-10"/><line x1="60" y1="230" x2="300" y2="-10"/><line x1="90" y1="230" x2="330" y2="-10"/><line x1="120" y1="230" x2="360" y2="-10"/><line x1="150" y1="230" x2="390" y2="-10"/><line x1="180" y1="230" x2="420" y2="-10"/><line x1="210" y1="230" x2="450" y2="-10"/></g></svg>
+<p class="numeral">05</p>
+<div class="cab"><p class="rotulo">Lo que cambia</p><h2 class="titular">Cinco pilares para una nueva forma de trabajar</h2><p class="bajada">La operación diaria de Clean Vide, antes y después del sistema.</p></div>
+<div class="vline"></div>
+<div class="indice">
+<div class="cue fila" data-t="2.78"><p class="n">01</p><h3>Control de personal</h3></div>
+<div class="cue fila" data-t="4.3"><p class="n">02</p><h3>Control de inventario</h3></div>
+<div class="cue fila" data-t="5.52"><p class="n">03</p><h3>Orden en los procesos</h3></div>
+<div class="cue fila" data-t="6.5"><p class="n">04</p><h3>Control del producto</h3></div>
+<div class="cue fila" data-t="9.14"><p class="n">05</p><h3>Responsabilidad y profesionalismo</h3></div>
+</div>
+<div class="pie2"><span><b>Clean Vide</b> · Sistema de Control Operativo</span><span>03</span></div>
+</section>
+<section id="personal" class="ed">
+<div class="bloque-terra"></div>
+<svg class="trama" viewBox="0 0 220 220" aria-hidden="true"><defs><clipPath id="c3_1"><rect width="220" height="220"/></clipPath></defs><g clip-path="url(#c3_1)" stroke="#B5321F" stroke-width="13"><line x1="-240" y1="230" x2="0" y2="-10"/><line x1="-210" y1="230" x2="30" y2="-10"/><line x1="-180" y1="230" x2="60" y2="-10"/><line x1="-150" y1="230" x2="90" y2="-10"/><line x1="-120" y1="230" x2="120" y2="-10"/><line x1="-90" y1="230" x2="150" y2="-10"/><line x1="-60" y1="230" x2="180" y2="-10"/><line x1="-30" y1="230" x2="210" y2="-10"/><line x1="0" y1="230" x2="240" y2="-10"/><line x1="30" y1="230" x2="270" y2="-10"/><line x1="60" y1="230" x2="300" y2="-10"/><line x1="90" y1="230" x2="330" y2="-10"/><line x1="120" y1="230" x2="360" y2="-10"/><line x1="150" y1="230" x2="390" y2="-10"/><line x1="180" y1="230" x2="420" y2="-10"/><line x1="210" y1="230" x2="450" y2="-10"/></g></svg>
+<p class="numeral">01</p>
+<div class="tit-pilar"><p class="rotulo">Pilar</p><h2 class="titular">Control de personal</h2>
+<div class="comparativo">
+<div class="col antes"><p class="k">Antes</p><p class="it">Entradas y salidas sin un registro confiable.</p><p class="it">No se sabía quién estaba en turno.</p><p class="it">Horas difíciles de comprobar.</p></div>
+<div class="col ahora"><p class="cue k" data-t="4.08">Ahora</p><p class="cue it" data-t="4.38">Entrada, salida y horas por checador.</p><p class="cue it" data-t="9.3">Quién está en turno, en tiempo real.</p><p class="cue it" data-t="12.38">Cada movimiento ligado a un usuario.</p></div>
+</div>
+</div>
+<img class="captura2" src="img/rh_desktop.jpg" alt="Pantalla real de Asistencias y Recursos Humanos">
+<p class="leyenda">Módulo de Asistencias y RH</p>
+<div class="pie2"><span><b>Clean Vide</b> · Sistema de Control Operativo</span><span>04</span></div>
+<p class="firma2">By KAI Branding | Studio</p>
+</section>
+<section id="inventario" class="ed">
+<div class="bloque-terra"></div>
+<svg class="trama" viewBox="0 0 220 220" aria-hidden="true"><defs><clipPath id="c4_1"><rect width="220" height="220"/></clipPath></defs><g clip-path="url(#c4_1)" stroke="#B5321F" stroke-width="13"><line x1="-240" y1="230" x2="0" y2="-10"/><line x1="-210" y1="230" x2="30" y2="-10"/><line x1="-180" y1="230" x2="60" y2="-10"/><line x1="-150" y1="230" x2="90" y2="-10"/><line x1="-120" y1="230" x2="120" y2="-10"/><line x1="-90" y1="230" x2="150" y2="-10"/><line x1="-60" y1="230" x2="180" y2="-10"/><line x1="-30" y1="230" x2="210" y2="-10"/><line x1="0" y1="230" x2="240" y2="-10"/><line x1="30" y1="230" x2="270" y2="-10"/><line x1="60" y1="230" x2="300" y2="-10"/><line x1="90" y1="230" x2="330" y2="-10"/><line x1="120" y1="230" x2="360" y2="-10"/><line x1="150" y1="230" x2="390" y2="-10"/><line x1="180" y1="230" x2="420" y2="-10"/><line x1="210" y1="230" x2="450" y2="-10"/></g></svg>
+<p class="numeral">02</p>
+<div class="tit-pilar"><p class="rotulo">Pilar</p><h2 class="titular">Control de inventario</h2>
+<div class="comparativo">
+<div class="col antes"><p class="k">Antes</p><p class="it">Existencias conocidas solo al contar.</p><p class="it">Faltantes descubiertos tarde.</p><p class="it">Cada bodega con su propia cuenta.</p></div>
+<div class="col ahora"><p class="cue k" data-t="6.66">Ahora</p><p class="cue it" data-t="6.96">Existencias en vivo por bodega.</p><p class="cue it" data-t="10.24">Alertas de reabastecimiento.</p><p class="cue it" data-t="11.5">Auditoría física contra sistema.</p></div>
+</div>
+</div>
+<img class="captura2 " src="img/stock_desktop.jpg" alt="Pantalla real de Stock y Almacenes">
+<p class="leyenda baja">Módulo de Stock y Almacenes</p>
+<div class="pie2"><span><b>Clean Vide</b> · Sistema de Control Operativo</span><span>05</span></div>
+<p class="firma2">By KAI Branding | Studio</p>
+</section>
+<section id="procesos" class="ed">
+<div class="bloque-terra"></div>
+<svg class="trama" viewBox="0 0 220 220" aria-hidden="true"><defs><clipPath id="c5_1"><rect width="220" height="220"/></clipPath></defs><g clip-path="url(#c5_1)" stroke="#B5321F" stroke-width="13"><line x1="-240" y1="230" x2="0" y2="-10"/><line x1="-210" y1="230" x2="30" y2="-10"/><line x1="-180" y1="230" x2="60" y2="-10"/><line x1="-150" y1="230" x2="90" y2="-10"/><line x1="-120" y1="230" x2="120" y2="-10"/><line x1="-90" y1="230" x2="150" y2="-10"/><line x1="-60" y1="230" x2="180" y2="-10"/><line x1="-30" y1="230" x2="210" y2="-10"/><line x1="0" y1="230" x2="240" y2="-10"/><line x1="30" y1="230" x2="270" y2="-10"/><line x1="60" y1="230" x2="300" y2="-10"/><line x1="90" y1="230" x2="330" y2="-10"/><line x1="120" y1="230" x2="360" y2="-10"/><line x1="150" y1="230" x2="390" y2="-10"/><line x1="180" y1="230" x2="420" y2="-10"/><line x1="210" y1="230" x2="450" y2="-10"/></g></svg>
+<p class="numeral">03</p>
+<div class="tit-pilar"><p class="rotulo">Pilar</p><h2 class="titular">Orden en los procesos</h2>
+<div class="comparativo">
+<div class="col antes"><p class="k">Antes</p><p class="it">Cada quien surtía a su manera.</p><p class="it">Pedidos armados de memoria.</p><p class="it">Pasos que se olvidaban.</p></div>
+<div class="col ahora"><p class="cue k" data-t="2.5">Ahora</p><p class="cue it" data-t="2.8">Un mismo flujo para todos.</p><p class="cue it" data-t="8.8">Avance del pedido pieza por pieza.</p><p class="cue it" data-t="11.26">Remisión IMSS y ticket en la orden.</p></div>
+</div>
+</div>
+<img class="captura2 vert" src="img/picking_moviles.jpg" alt="Pantallas reales de Surtido y Picking">
+<p class="leyenda baja">App de Surtido y Picking</p>
+<div class="pie2"><span><b>Clean Vide</b> · Sistema de Control Operativo</span><span>06</span></div>
+<p class="firma2">By KAI Branding | Studio</p>
+</section>
+<section id="producto" class="ed">
+<div class="bloque-terra"></div>
+<svg class="trama" viewBox="0 0 220 220" aria-hidden="true"><defs><clipPath id="c6_1"><rect width="220" height="220"/></clipPath></defs><g clip-path="url(#c6_1)" stroke="#B5321F" stroke-width="13"><line x1="-240" y1="230" x2="0" y2="-10"/><line x1="-210" y1="230" x2="30" y2="-10"/><line x1="-180" y1="230" x2="60" y2="-10"/><line x1="-150" y1="230" x2="90" y2="-10"/><line x1="-120" y1="230" x2="120" y2="-10"/><line x1="-90" y1="230" x2="150" y2="-10"/><line x1="-60" y1="230" x2="180" y2="-10"/><line x1="-30" y1="230" x2="210" y2="-10"/><line x1="0" y1="230" x2="240" y2="-10"/><line x1="30" y1="230" x2="270" y2="-10"/><line x1="60" y1="230" x2="300" y2="-10"/><line x1="90" y1="230" x2="330" y2="-10"/><line x1="120" y1="230" x2="360" y2="-10"/><line x1="150" y1="230" x2="390" y2="-10"/><line x1="180" y1="230" x2="420" y2="-10"/><line x1="210" y1="230" x2="450" y2="-10"/></g></svg>
+<p class="numeral">04</p>
+<div class="tit-pilar"><p class="rotulo">Pilar</p><h2 class="titular">Control del producto</h2>
+<div class="comparativo">
+<div class="col antes"><p class="k">Antes</p><p class="it">Productos identificados a simple vista.</p><p class="it">Confusiones entre presentaciones.</p><p class="it">Diferencias sin explicación.</p></div>
+<div class="col ahora"><p class="cue k" data-t="1.5799999999999998">Ahora</p><p class="cue it" data-t="1.88">Cada pieza, por código de barras.</p><p class="cue it" data-t="4.2">Se rechaza lo que no corresponde.</p><p class="cue it" data-t="6.8">Conteo físico contra Odoo.</p></div>
+</div>
+</div>
+<img class="captura2 vert" src="img/producto_moviles.jpg" alt="Pantallas reales del Escáner y la Auditoría">
+<p class="leyenda baja">Escáner y Auditoría de stock</p>
+<div class="pie2"><span><b>Clean Vide</b> · Sistema de Control Operativo</span><span>07</span></div>
+<p class="firma2">By KAI Branding | Studio</p>
+</section>
+<section id="responsabilidad" class="ed">
+<div class="bloque-terra"></div>
+<svg class="trama" viewBox="0 0 220 220" aria-hidden="true"><defs><clipPath id="c7_1"><rect width="220" height="220"/></clipPath></defs><g clip-path="url(#c7_1)" stroke="#B5321F" stroke-width="13"><line x1="-240" y1="230" x2="0" y2="-10"/><line x1="-210" y1="230" x2="30" y2="-10"/><line x1="-180" y1="230" x2="60" y2="-10"/><line x1="-150" y1="230" x2="90" y2="-10"/><line x1="-120" y1="230" x2="120" y2="-10"/><line x1="-90" y1="230" x2="150" y2="-10"/><line x1="-60" y1="230" x2="180" y2="-10"/><line x1="-30" y1="230" x2="210" y2="-10"/><line x1="0" y1="230" x2="240" y2="-10"/><line x1="30" y1="230" x2="270" y2="-10"/><line x1="60" y1="230" x2="300" y2="-10"/><line x1="90" y1="230" x2="330" y2="-10"/><line x1="120" y1="230" x2="360" y2="-10"/><line x1="150" y1="230" x2="390" y2="-10"/><line x1="180" y1="230" x2="420" y2="-10"/><line x1="210" y1="230" x2="450" y2="-10"/></g></svg>
+<p class="numeral">05</p>
+<div class="tit-pilar"><p class="rotulo">Pilar</p><h2 class="titular">Responsabilidad y profesionalismo</h2>
+<div class="comparativo">
+<div class="col antes"><p class="k">Antes</p><p class="it">Mermas sin responsable.</p><p class="it">Movimientos sin evidencia.</p><p class="it">Documentos informales.</p></div>
+<div class="col ahora"><p class="cue k" data-t="1.9999999999999998">Ahora</p><p class="cue it" data-t="2.3">Usuario, fecha y hora en cada envío.</p><p class="cue it" data-t="6.62">Mermas con foto y doble firma.</p><p class="cue it" data-t="10.58">Remisiones formales sin precios.</p></div>
+</div>
+</div>
+<img class="captura2 cuad" src="img/admin_desktop.jpg" alt="Pantalla real de la Bitácora de lotes">
+<p class="leyenda baja">Bitácora de lotes escaneados</p>
+<div class="pie2"><span><b>Clean Vide</b> · Sistema de Control Operativo</span><span>08</span></div>
+<p class="firma2">By KAI Branding | Studio</p>
+</section>
+<section id="crecimiento" class="ed azul">
+<div class="crece-cab"><p class="rotulo">Hacia adelante</p><h2 class="titular">El sistema crece al ritmo de Clean Vide</h2><p class="bajada">Cada conector se suma a la misma base. Nada empieza de cero.</p></div>
+<div class="rutas">
+<div class="ruta2 hoy"><p class="t">HOY</p><div><h3>4 bodegas y 4 portales</h3><p class="d">Matriz, Chilpancingo, Iztapalapa y Lerma en un solo sistema.</p></div></div>
+<div class="cue ruta2" data-t="2.7"><p class="t">SIGUIENTE</p><div><h3>Nuevas bodegas</h3><p class="d">Cada sucursal se suma con sus usuarios y permisos.</p></div></div>
+<div class="cue ruta2" data-t="5.04"><p class="t">SIGUIENTE</p><div><h3>Flotilla</h3><p class="d">Unidades, mantenimiento y costos de reparto.</p></div></div>
+<div class="cue ruta2" data-t="5.98"><p class="t">SIGUIENTE</p><div><h3>Facturación</h3><p class="d">Comprobantes fiscales desde la operación.</p></div></div>
+<div class="cue ruta2" data-t="6.96"><p class="t">SIGUIENTE</p><div><h3>Ventas y CRM</h3><p class="d">Prospectos y seguimiento comercial.</p></div></div>
+</div>
+<div class="pie2"><span><b>Clean Vide</b> · Sistema de Control Operativo</span><span>09</span></div>
+</section>
+<section id="inversion" class="ed">
+<div class="inv-cab"><p class="rotulo">La inversión</p><h2 class="titular">Un sistema propio, sin rentas por usuario</h2></div>
+<div class="otro2"><p class="k">Por otro camino</p><p class="it">Licencias de ERP pagadas cada mes, por cada usuario.</p><p class="it">Un implementador externo que no conoce la operación.</p><p class="it">Cada desarrollo a la medida, cotizado aparte.</p><p class="fuente">Odoo Enterprise: desde US$ 24.90 por usuario al mes, más IVA.</p></div>
+<div class="partes2 cue" data-t="8.08"><p class="k">Con este sistema</p>
+<div class="p2"><div><h3>Es de Clean Vide</h3><p class="d">Sin rentas por usuario: crece sin pagar más por cada cuenta.</p></div></div>
+<div class="p2"><div><h3>Un equipo que ya la conoce</h3><p class="d">Quien diseñó el flujo es quien lo mantiene y lo hace crecer.</p></div></div>
+<div class="p2"><div><h3>Costos claros</h3><p class="d">Implementación, mantenimiento mensual y tarifas por conector, acordadas desde el inicio.</p></div></div>
+<p class="anexo">El detalle de la inversión se entrega en el documento de propuesta.</p>
+</div>
+<div class="pie2"><span><b>Clean Vide</b> · Sistema de Control Operativo</span><span>10</span></div>
+</section>
+<section id="cierre" class="ed cierre2">
+<svg class="trama" viewBox="0 0 220 220" aria-hidden="true"><defs><clipPath id="c10_1"><rect width="220" height="220"/></clipPath></defs><g clip-path="url(#c10_1)" stroke="#FBF9F5" stroke-width="13"><line x1="-240" y1="230" x2="0" y2="-10"/><line x1="-210" y1="230" x2="30" y2="-10"/><line x1="-180" y1="230" x2="60" y2="-10"/><line x1="-150" y1="230" x2="90" y2="-10"/><line x1="-120" y1="230" x2="120" y2="-10"/><line x1="-90" y1="230" x2="150" y2="-10"/><line x1="-60" y1="230" x2="180" y2="-10"/><line x1="-30" y1="230" x2="210" y2="-10"/><line x1="0" y1="230" x2="240" y2="-10"/><line x1="30" y1="230" x2="270" y2="-10"/><line x1="60" y1="230" x2="300" y2="-10"/><line x1="90" y1="230" x2="330" y2="-10"/><line x1="120" y1="230" x2="360" y2="-10"/><line x1="150" y1="230" x2="390" y2="-10"/><line x1="180" y1="230" x2="420" y2="-10"/><line x1="210" y1="230" x2="450" y2="-10"/></g></svg>
+<div class="cierre-cab"><p class="rotulo">Siguiente paso</p><h2 class="titular">Acordamos hablar de su valor cuando funcionara. Hoy funciona.</h2><p class="cue sig" data-t="4.14">Autorizar la propuesta, iniciar el mantenimiento mensual y definir juntos el próximo conector.</p></div>
+<img class="logo" src="img/cv_logo_blanco.svg" alt="Clean Vide">
+<p class="firma3">By KAI Branding | Studio</p>
+</section>
+
+</div><div id="subt"></div></div>
+<div id="girar">Gira tu celular para verla mejor</div>
+<div id="fin"><button type="button" id="otra">Ver de nuevo</button></div>
+<div id="inicio"><div class="caja"><button type="button" id="arranca"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z" fill="#fff"/></svg>Iniciar recorrido</button><p>3 minutos · con audio · By KAI Branding | Studio</p></div></div>
+<nav id="barra" aria-label="Controles">
+<button type="button" id="prev" aria-label="Lámina anterior"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<button type="button" id="play" aria-label="Reproducir o pausar"><svg id="ico" width="20" height="20" viewBox="0 0 24 24"><path d="M7 4v16l13-8z" fill="#fff"/></svg></button>
+<button type="button" id="next" aria-label="Lámina siguiente"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+<div id="puntos"></div>
+<span id="tiempo">0:00</span>
+<button type="button" id="cc" aria-pressed="false" aria-label="Subtítulos">CC</button>
+</nav>
+<audio id="voz" preload="auto"></audio>
+<script>
+{
+const CAPS=["Esta es la historia de cómo Clean Vide cambió su forma de operar. De trabajar con intuición… a trabajar con control, orden y responsabilidad.", "Todo empezó con una aplicación genérica. Funcionaba, pero no tenía identidad, no tenía un flujo claro y no conectaba a las bodegas entre sí. Diseñamos cómo debía trabajar cada área. Lo convertimos en un sistema. Y hoy, Clean Vide inicia una nueva etapa.", "Este cambio descansa en cinco pilares: el control del personal, del inventario, de los procesos y del producto… y algo que los une a todos: la responsabilidad.", "Antes, las entradas y salidas dependían de la palabra de cada quien. Hoy, el sistema registra la entrada, la salida y las horas de cada persona. Se sabe quién está en turno, en tiempo real. Y cada movimiento tiene un nombre.", "Antes, para saber cuánto producto había, había que ir a contarlo. Y los faltantes se descubrían cuando ya era tarde. Hoy, cada bodega muestra sus existencias en vivo. El sistema avisa antes de que algo se agote.", "Antes, cada quien surtía a su manera. Hoy, todos siguen el mismo camino: enviar, recibir, surtir y autorizar. Cada pedido avanza pieza por pieza, y la remisión sale desde la misma orden.", "Cada pieza tiene identidad. Se reconoce por su código de barras, y el sistema rechaza lo que no corresponde. Cuando se cuenta físicamente, el resultado se compara al instante con lo que dice el sistema.", "Este es el cambio más importante. Hoy, cada envío queda registrado con usuario, fecha y hora. Las mermas se reportan con fotografía y con dos responsables. Y los documentos que salen de Clean Vide son formales. Esto es lo que permite crecer con confianza… y responder ante clientes como el IMSS.", "Hoy operan cuatro bodegas en un solo sistema. Mañana pueden ser más. Flotilla, facturación, ventas… cada nuevo módulo se suma a la misma base. Nada empieza de cero.", "Por otro camino, Clean Vide pagaría licencias cada mes, por cada usuario, más un implementador externo que no conoce su operación. Con este sistema, Clean Vide es dueño de su herramienta. Sin rentas por usuario. Y con un equipo que ya conoce cómo trabaja.", "Acordamos hablar de su valor cuando funcionara. Hoy funciona. El siguiente paso es seguir creciendo, juntos."];
+const secs=[...document.querySelectorAll('#escenario section')];
+const N=secs.length, voz=document.getElementById('voz'), esc=document.getElementById('escenario');
+const puntos=document.getElementById('puntos'), ico=document.getElementById('ico'), subt=document.getElementById('subt');
+const PLAY='<path d="M7 4v16l13-8z" fill="#fff"/>', PAUSA='<path d="M7 4h4v16H7zM14 4h4v16h-4z" fill="#fff"/>';
+let i=0, sonando=false, espera=null;
+puntos.innerHTML=secs.map((s,k)=>`<button type="button" data-k="${k}" aria-label="Lámina ${k+1}">${String(k+1).padStart(2,'0')}<span class="prog"></span></button>`).join('');
+const pbs=[...puntos.children];
+function escala(){const v=document.getElementById('visor');const w=v.clientWidth,h=v.clientHeight;const s=Math.min(w/1920,h/1080)*0.96;esc.style.transform=`translate(-50%,-50%) scale(${s})`}
+const ro=new ResizeObserver(escala);ro.observe(document.getElementById('visor'));escala();
+function cues(t){secs[i].querySelectorAll('.cue').forEach(c=>c.classList.toggle('on',t>=parseFloat(c.dataset.t)))}
+function mostrar(k,auto){
+  clearTimeout(espera);document.getElementById('fin').classList.remove('ver');
+  i=Math.max(0,Math.min(N-1,k));
+  secs.forEach((s,n)=>{s.classList.toggle('activa',n===i);if(n!==i)s.querySelectorAll('.cue').forEach(c=>c.classList.remove('on'))});
+  pbs.forEach((b,n)=>{b.classList.toggle('act',n===i);b.classList.toggle('hecho',n<i);b.querySelector('.prog').style.width=n<i?'100%':'0'});
+  const a=secs[i];a.querySelectorAll('.captura2,.captura,.numeral').forEach(e=>{e.style.animation='none';e.offsetHeight;e.style.animation=''});
+  voz.src='audio/cv_voz_'+String(i+1).padStart(2,'0')+'.mp3';
+  subt.textContent=CAPS[i]||'';subt.classList.toggle('tiene',!!CAPS[i]);
+  cues(0);
+  if(auto||sonando){reproducir()}else{cues(999)}
+}
+function reproducir(){const p=voz.play();sonando=true;ico.innerHTML=PAUSA;if(p)p.catch(e=>{if(e&&e.name==='AbortError')return;sonando=false;ico.innerHTML=PLAY;cues(999)})}
+function pausar(){voz.pause();sonando=false;ico.innerHTML=PLAY}
+voz.addEventListener('timeupdate',()=>{cues(voz.currentTime);const d=voz.duration||1;pbs[i].querySelector('.prog').style.width=(voz.currentTime/d*100)+'%';const t=Math.floor(voz.currentTime);document.getElementById('tiempo').textContent=`${String(i+1).padStart(2,'0')} · ${Math.floor(t/60)}:${String(t%60).padStart(2,'0')}`});
+voz.addEventListener('ended',()=>{cues(999);pbs[i].querySelector('.prog').style.width='100%';if(i<N-1){espera=setTimeout(()=>mostrar(i+1,true),900)}else{sonando=false;ico.innerHTML=PLAY;document.getElementById('fin').classList.add('ver')}});
+document.getElementById('arranca').addEventListener('click',()=>{document.getElementById('inicio').classList.add('oculto');mostrar(0,true)});
+document.getElementById('play').addEventListener('click',()=>{document.getElementById('inicio').classList.add('oculto');sonando?pausar():reproducir()});
+document.getElementById('prev').addEventListener('click',()=>mostrar(i-1));
+document.getElementById('next').addEventListener('click',()=>mostrar(i+1));
+document.getElementById('otra').addEventListener('click',()=>mostrar(0,true));
+puntos.addEventListener('click',e=>{const b=e.target.closest('button');if(b){document.getElementById('inicio').classList.add('oculto');mostrar(+b.dataset.k)}});
+const cc=document.getElementById('cc');cc.addEventListener('click',()=>{const on=document.body.classList.toggle('cc');cc.classList.toggle('on',on);cc.setAttribute('aria-pressed',on)});
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')mostrar(i+1);else if(e.key==='ArrowLeft')mostrar(i-1);else if(e.key===' '){e.preventDefault();sonando?pausar():reproducir()}});
+secs[0].classList.add('activa');pbs[0].classList.add('act');secs[0].querySelectorAll('.cue').forEach(c=>c.classList.add('on'));
+}
+</script>
+</body>
+</html>
